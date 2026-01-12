@@ -36,7 +36,6 @@ const IronCore = ({ fluxIntensity, coreRef }) => {
 
   return (
     <mesh ref={coreRef} position={[0, 0, -0.4]}>
-      {" "}
       {/* 중앙 정렬을 위해 위치 조정 */}
       <extrudeGeometry args={[shape, extrudeSettings]} />
       <meshStandardMaterial
@@ -128,7 +127,6 @@ const TransformerScene = () => {
   return (
     <group>
       {/* --- 1. 사각형 철심 (Rectangular Iron Core) --- */}
-      {/* fluxIntensity는 useFrame에서 직접 제어하므로 prop으로 전달하지 않아도 됨 */}
       <IronCore coreRef={coreRef} fluxIntensity={0} />
 
       {/* --- 2. 1차 코일 (Primary Coil - 입력, 빨강) --- */}
