@@ -163,13 +163,13 @@ const ACMotorScene = () => {
       <group ref={rotorRef}>
         <mesh rotation={[Math.PI / 2, 0, 0]}>
           <cylinderGeometry args={[1.5, 1.5, 3, 32]} />
-          <meshStandardMaterial
-            color="#666"
-            roughness={0.35}
-            metalness={0.7}
-            emissive="#444"
-            emissiveIntensity={0.6}
-          />
+           <meshStandardMaterial
+    color="#888888"          // ✅ 기본을 밝은 회색
+    roughness={0.25}         // ✅ 거칠기 낮춤
+    metalness={0.65}         // ✅ 철심 느낌
+    emissive="#555555"       // ✅ 핵심: 자체 발광
+    emissiveIntensity={0.8}  // ✅ 교재 수준 밝기
+  />
         </mesh>
 
         {/* 알루미늄 바 */}
@@ -218,7 +218,11 @@ const ACMotor3D = () => {
         <ambientLight intensity={0.6} />
         <pointLight position={[10, 10, 10]} intensity={1.0} />
         <pointLight position={[0, 3, 5]} intensity={0.6} />
-
+<pointLight
+  position={[0, 0, 4]}
+  intensity={0.9}
+  color="#ffffff"
+/>
         <Suspense
           fallback={
             <Html center>
