@@ -3,17 +3,24 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Html, Center } from "@react-three/drei";
 import * as THREE from "three";
 
+// 🎨 색상 팔레트 (오른쪽 이미지와 일치시킴)
+const COLORS = {
+  PRIMARY_COIL: "#3b82f6", // 1차 코일 (파란색 - Blue-500)
+  SECONDARY_COIL: "#f97316", // 2차 코일 (주황색 - Orange-500)
+  CORE_OFF: "#64748b", // 철심 기본색 (회색 - Slate-500)
+  CORE_ON: "#fb923c", // 철심 발광색 (주황 계열 - Orange-400)
+  FLUX_ARROW: "#ef4444", // 자속 화살표 (빨간색 - Red-500)
+};
+
 // 🏭 사각형 철심 (Rectangular Iron Core)
-const IronCore = ({ coreRef }) => {
+const IronCore = ({ fluxIntensity, coreRef }) => {
   const shape = useMemo(() => {
     const s = new THREE.Shape();
-    // 바깥쪽 사각형 (Outer bounds)
     s.moveTo(-2.2, -1.6);
     s.lineTo(2.2, -1.6);
     s.lineTo(2.2, 1.6);
     s.lineTo(-2.2, 1.6);
     s.lineTo(-2.2, -1.6);
-    // 안쪽 사각형 (Inner hole)
     const hole = new THREE.Path();
     hole.moveTo(-1.4, -0.8);
     hole.lineTo(1.4, -0.8);
@@ -30,65 +37,17 @@ const IronCore = ({ coreRef }) => {
   );
 
   return (
-    // 철심의 중심을 Z=0에 맞추기 위해 z위치 조정 (-depth/2)
     <mesh ref={coreRef} position={[0, 0, -0.4]}>
       <extrudeGeometry args={[shape, extrudeSettings]} />
-      {/* 자속이 통과하는 것을 강조하기 위해 철심 자체는 약간 어둡고 반사 재질로 설정 */}
+      {/* 자속에 따라 은은하게 발광 (강도 줄임) */}
       <meshStandardMaterial
-        color="#444"
-        roughness={0.2}
-        metalness={0.9}
-        transparent
-        opacity={0.9}
+        color={COLORS.CORE_OFF}
+        roughness={0.5}
+        metalness={0.4}
+        emissive={COLORS.CORE_ON}
+        emissiveIntensity={fluxIntensity * 0.2} // 발광 강도 약하게
       />
     </mesh>
-  );
-};
-
-// ✨ [NEW] 철심 내부를 통과하는 자속선 (Internal Flux Lines)
-const InternalFluxLines = ({ fluxRef }) => {
-  // 철심의 중심 경로를 따라가는 커브 생성
-  const fluxPath = useMemo(() => {
-    const path = new THREE.CurvePath();
-    const w = 1.8; // 철심 중심 폭 ( (2.2+1.4)/2 )
-    const h = 1.2; // 철심 중심 높이 ( (1.6+0.8)/2 )
-
-    const p1 = new THREE.Vector3(-w, -h, 0);
-    const p2 = new THREE.Vector3(w, -h, 0);
-    const p3 = new THREE.Vector3(w, h, 0);
-    const p4 = new THREE.Vector3(-w, h, 0);
-
-    path.add(new THREE.LineCurve3(p1, p2)); // 하단
-    path.add(new THREE.LineCurve3(p2, p3)); // 우측
-    path.add(new THREE.LineCurve3(p3, p4)); // 상단
-    path.add(new THREE.LineCurve3(p4, p1)); // 좌측
-    return path;
-  }, []);
-
-  // 여러 개의 평행한 자속선을 만들어 철심 내부를 채움
-  const numLines = 5;
-
-  return (
-    <group ref={fluxRef}>
-      {[...Array(numLines)].map((_, i) => {
-        // Z축으로 약간씩 오프셋을 주어 철심 두께 내부에 배치
-        const zOffset = (i - (numLines - 1) / 2) * 0.15;
-        return (
-          <mesh key={i} position={[0, 0, zOffset]}>
-            {/* 튜브 형태로 자속선 생성 (closed=true로 순환) */}
-            <tubeGeometry args={[fluxPath, 128, 0.03, 8, true]} />
-            {/* 빛나는 에너지 느낌의 재질 (BasicMaterial + 밝은색) */}
-            <meshBasicMaterial
-              color="#ff3300" // 밝은 주황/빨강색 자속
-              transparent
-              opacity={0} // 초기엔 안보임 (애니메이션으로 제어)
-              depthWrite={false} // 철심 내부에 있어도 밝게 빛나도록
-              blending={THREE.AdditiveBlending} // 빛 번짐 효과 추가
-            />
-          </mesh>
-        );
-      })}
-    </group>
   );
 };
 
@@ -116,10 +75,11 @@ const WindingCoil = ({
         )
       );
     }
+    // 코일 선 두께를 약간 늘려 잘 보이게 함 (0.06 -> 0.07)
     return new THREE.TubeGeometry(
       new THREE.CatmullRomCurve3(points),
       256,
-      0.06,
+      0.07,
       12,
       false
     );
@@ -128,12 +88,13 @@ const WindingCoil = ({
   return (
     <group position={position} rotation={rotation}>
       <mesh geometry={coilGeometry}>
-        <meshStandardMaterial color={color} roughness={0.4} metalness={0.6} />
+        <meshStandardMaterial color={color} roughness={0.3} metalness={0.2} />
       </mesh>
-      <Html position={[0, length / 2 + 0.5, 0]} center>
+      {/* 라벨 디자인 개선 */}
+      <Html position={[0, length / 2 + 0.7, 0]} center>
         <div
           style={{ backgroundColor: labelBg }}
-          className="text-white px-2 py-1 rounded font-bold text-sm whitespace-nowrap"
+          className="text-white px-3 py-1.5 rounded-lg font-bold text-sm shadow-md whitespace-nowrap"
         >
           {label}
         </div>
@@ -142,37 +103,70 @@ const WindingCoil = ({
   );
 };
 
+// ✨ [NEW] 자속 방향을 나타내는 큰 화살표들
+const FluxArrows = ({ fluxRef }) => {
+  // 화살표 모양 (Cone + Cylinder)
+  const ArrowMesh = () => (
+    <group rotation={[0, 0, -Math.PI / 2]}>
+      <mesh position={[0, 0.5, 0]}>
+        <coneGeometry args={[0.3, 0.6, 16]} />
+        <meshBasicMaterial color={COLORS.FLUX_ARROW} />
+      </mesh>
+      <mesh position={[0, 0, 0]}>
+        <cylinderGeometry args={[0.12, 0.12, 1]} />
+        <meshBasicMaterial color={COLORS.FLUX_ARROW} />
+      </mesh>
+    </group>
+  );
+
+  return (
+    <group ref={fluxRef}>
+      {/* 상단 화살표 (오른쪽 방향) */}
+      <mesh position={[0, 1.2, 0]}>
+        <ArrowMesh />
+      </mesh>
+      {/* 하단 화살표 (왼쪽 방향) */}
+      <mesh position={[0, -1.2, 0]} rotation={[0, 0, Math.PI]}>
+        <ArrowMesh />
+      </mesh>
+      {/* 좌측 화살표 (위쪽 방향) */}
+      <mesh position={[-1.8, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <ArrowMesh />
+      </mesh>
+      {/* 우측 화살표 (아래쪽 방향) */}
+      <mesh position={[1.8, 0, 0]} rotation={[0, 0, -Math.PI / 2]}>
+        <ArrowMesh />
+      </mesh>
+
+      {/* 자속 기호 Φ (Phi) */}
+      <Html position={[0, 0, 0]} center>
+        <div className="text-red-500 text-4xl font-black drop-shadow-lg">Φ</div>
+      </Html>
+    </group>
+  );
+};
+
 // 🎬 메인 변압기 씬
 const TransformerScene = () => {
   const coreRef = useRef();
-  const internalFluxRef = useRef(); // 내부 자속선 Ref
-  const arrowFluxRef = useRef(); // 방향 화살표 Ref
+  const fluxRef = useRef();
   const fluxIntensityRef = useRef(0);
 
   useFrame(({ clock }) => {
-    const t = clock.getElapsedTime() * 3;
-    // 0 ~ 1 사이로 맥동하는 자속 강도 (sin파)
+    const t = clock.getElapsedTime() * 2.5;
+    // 교류 맥동 (0 ~ 1)
     fluxIntensityRef.current = (Math.sin(t) + 1) / 2;
-
     const intensity = fluxIntensityRef.current;
 
-    // 1. [핵심] 철심 내부 자속선의 불투명도 애니메이션
-    if (internalFluxRef.current) {
-      internalFluxRef.current.children.forEach((child) => {
-        // 최소 0.1에서 최대 0.8까지 밝기 맥동
-        child.material.opacity = 0.1 + intensity * 0.7;
-      });
-    }
-
-    // 2. 철심 자체의 미세한 발광 (보조 효과)
+    // 1. 철심 발광 애니메이션
     if (coreRef.current) {
-      coreRef.current.material.emissiveIntensity = intensity * 0.2;
+      coreRef.current.material.emissiveIntensity = intensity * 0.3;
     }
-
-    // 3. 방향 화살표 애니메이션
-    if (arrowFluxRef.current) {
-      arrowFluxRef.current.children.forEach((child) => {
-        child.material.opacity = intensity;
+    // 2. 화살표 투명도 애니메이션 (깜빡임)
+    if (fluxRef.current) {
+      fluxRef.current.children.forEach((child) => {
+        // Html 컴포넌트(Φ)는 제외하고 메시에만 적용
+        if (child.material) child.material.opacity = 0.3 + intensity * 0.7;
       });
     }
   });
@@ -180,46 +174,32 @@ const TransformerScene = () => {
   return (
     <group>
       {/* 1. 사각형 철심 */}
-      <IronCore coreRef={coreRef} />
+      <IronCore coreRef={coreRef} fluxIntensity={0} />
 
-      {/* 2. [핵심] 철심 내부를 통과하는 자속선 추가 */}
-      <InternalFluxLines fluxRef={internalFluxRef} />
-
-      {/* 3. 1차 코일 (입력) */}
+      {/* 2. 1차 코일 (입력 - 파란색) */}
       <WindingCoil
         position={[-1.8, 0, 0]}
-        rotation={[0, 0, 0]}
-        color="#d97706"
-        turns={10}
+        color={COLORS.PRIMARY_COIL} // 파란색 적용
+        turns={12}
         length={1.4}
         radius={0.6}
-        label="입력 (N1)"
-        labelBg="#d97706"
+        label="Primary (N1)"
+        labelBg={COLORS.PRIMARY_COIL}
       />
 
-      {/* 4. 2차 코일 (출력) */}
+      {/* 3. 2차 코일 (출력 - 주황색) */}
       <WindingCoil
         position={[1.8, 0, 0]}
-        rotation={[0, 0, 0]}
-        color="#2563eb"
-        turns={20}
+        color={COLORS.SECONDARY_COIL} // 주황색 적용
+        turns={24} // 권수 2배 (승압)
         length={1.4}
         radius={0.65}
-        label="출력 (N2 > N1)"
-        labelBg="#2563eb"
+        label="Secondary (N2)"
+        labelBg={COLORS.SECONDARY_COIL}
       />
 
-      {/* 5. 자속 방향 화살표 (보조 표시) */}
-      <group ref={arrowFluxRef}>
-        <mesh position={[0, 1.2, 0]} rotation={[0, 0, -Math.PI / 2]}>
-          <coneGeometry args={[0.25, 0.6, 16]} />
-          <meshBasicMaterial color="#ff3300" transparent opacity={0} />
-        </mesh>
-        <mesh position={[0, -1.2, 0]} rotation={[0, 0, Math.PI / 2]}>
-          <coneGeometry args={[0.25, 0.6, 16]} />
-          <meshBasicMaterial color="#ff3300" transparent opacity={0} />
-        </mesh>
-      </group>
+      {/* 4. [NEW] 자속 방향 큰 화살표들 */}
+      <FluxArrows fluxRef={fluxRef} />
     </group>
   );
 };
@@ -231,16 +211,15 @@ const Transformer3D = () => {
       style={{
         width: "100%",
         height: "100%",
-        background: "#f0f2f5",
+        background: "#f1f5f9",
         borderRadius: "12px",
         overflow: "hidden",
       }}
     >
       <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
-        <ambientLight intensity={0.4} />
+        <ambientLight intensity={0.8} /> {/* 전체적으로 밝게 */}
         <pointLight position={[10, 10, 10]} intensity={0.8} />
-        {/* 자속이 빛나는 느낌을 강조하기 위한 조명 추가 */}
-        <pointLight position={[0, 0, 2]} intensity={0.5} color="#ff5500" />
+        <pointLight position={[-10, -10, 10]} intensity={0.5} />
         <Center>
           <TransformerScene />
         </Center>
