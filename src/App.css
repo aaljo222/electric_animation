@@ -1,0 +1,117 @@
+/* 전체 레이아웃 */
+.app-container {
+  min-height: 100vh;
+  background-color: #f3f4f6;
+  padding: 40px 20px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.main-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.main-header h1 {
+  color: #1f2937;
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.content-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 50px;
+}
+
+/* 카드 스타일 */
+.study-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  padding: 20px 30px;
+  color: white;
+}
+
+.dc-header {
+  background-color: #2563eb;
+} /* 파란색 */
+.ac-header {
+  background-color: #059669;
+} /* 초록색 */
+
+.card-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  height: 800px; /* 모바일 기준 */
+}
+
+@media (min-width: 768px) {
+  .card-body {
+    flex-direction: row;
+    height: 500px; /* PC 기준 높이 */
+  }
+}
+
+/* 패널 스타일 */
+.visual-panel {
+  flex: 1;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.left-panel {
+  background-color: #111; /* 3D 배경색과 일치 */
+}
+
+.right-panel {
+  background-color: #ffffff;
+  border-left: 1px solid #e5e7eb;
+  padding: 20px;
+}
+
+.diagram-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.panel-label {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+
+.card-footer {
+  padding: 20px 30px;
+  background-color: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+  color: #4b5563;
+}
+
+/* App.css 기존 내용 아래에 추가 */
+
+.white-bg {
+  background-color: white !important; /* Motor3D는 흰 배경이 어울리므로 강제 적용 */
+  border-right: 1px solid #e5e7eb;
+}
