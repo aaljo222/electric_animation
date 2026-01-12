@@ -15,16 +15,13 @@ const COLORS = {
   BULB_OFF: "#4b5563", // 전구 꺼짐
 };
 
-// 📐 [핵심 수정] 자석 회전 각도 대폭 증가 (약 45~50도)
-const SCENE_ROTATION = [0, 0.9, 0];
-
-// 🧲 배경 자석 이미지
+// 🧲 배경 자석 이미지 (회전 없이 정면 배치)
 const TexturedMagnet = () => {
   const texture = useLoader(THREE.TextureLoader, magnetImg);
 
   return (
-    // 자석을 더 많이 틀어서 입체감 강조
-    <mesh position={[0, 0, -0.5]} rotation={SCENE_ROTATION}>
+    // 자석은 회전시키지 않고 배경으로 고정 (rotation=[0,0,0])
+    <mesh position={[0, 0, -0.5]} rotation={[0, 0, 0]}>
       <planeGeometry args={[6, 5]} />
       <meshStandardMaterial
         map={texture}
@@ -35,26 +32,28 @@ const TexturedMagnet = () => {
   );
 };
 
-// ⚡ 회전하는 사각형 코일
+// ⚡ 회전하는 사각형 코일 (크기 축소, 위치 하강, 시계방향 회전)
 const RotatingArmature = ({ setVoltage }) => {
   const groupRef = useRef();
 
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime() * 2.5;
     if (groupRef.current) {
-      groupRef.current.rotation.x = t; // 코일 회전
+      // 코일 자체의 회전 애니메이션
+      groupRef.current.rotation.x = t;
     }
     const v = Math.abs(Math.sin(t));
     setVoltage(v);
   });
 
-  const coilThickness = 0.1;
-  const coilWidth = 3.2;
-  const coilHeight = 2.2;
+  // ✅ [수정 1] 코일 크기 축소
+  const coilThickness = 0.06;
+  const coilWidth = 2.0; // 기존 3.2 -> 2.0
+  const coilHeight = 1.2; // 기존 2.2 -> 1.2
 
   return (
-    // ✅ 코일도 자석과 똑같은 각도로 회전시켜 '정렬'
-    <group position={[0, 0, 0]} rotation={SCENE_ROTATION}>
+    // ✅ [수정 2 & 3] 위치 아래로(y=-0.8), 시계방향 회전(y=-0.6 rad)
+    <group position={[0, -0.8, 0]} rotation={[0, -0.6, 0]}>
       <group ref={groupRef}>
         {/* 사각형 프레임 코일 */}
         <group>
@@ -88,8 +87,9 @@ const RotatingArmature = ({ setVoltage }) => {
             />
             <meshStandardMaterial color={COLORS.COIL} />
           </mesh>
+          {/* 내부 채움 */}
           <mesh>
-            <planeGeometry args={[coilWidth - 0.1, coilHeight - 0.1]} />
+            <planeGeometry args={[coilWidth - 0.05, coilHeight - 0.05]} />
             <meshBasicMaterial
               color={COLORS.COIL}
               transparent
@@ -99,20 +99,20 @@ const RotatingArmature = ({ setVoltage }) => {
           </mesh>
         </group>
 
-        {/* 회전축 */}
+        {/* 회전축 (길이 조정) */}
         <mesh rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.05, 0.05, 5, 16]} />
+          <cylinderGeometry args={[0.04, 0.04, 4, 16]} />
           <meshStandardMaterial color="#666" />
         </mesh>
 
-        {/* 슬립링 */}
-        <group position={[2.5, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-          <mesh position={[0, 0.3, 0]}>
-            <torusGeometry args={[0.25, 0.08, 16, 32]} />
+        {/* 슬립링 (위치 조정) */}
+        <group position={[1.8, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+          <mesh position={[0, 0.2, 0]}>
+            <torusGeometry args={[0.15, 0.06, 16, 32]} />
             <meshStandardMaterial color={COLORS.SLIP_RING} />
           </mesh>
-          <mesh position={[0, 0.6, 0]}>
-            <torusGeometry args={[0.25, 0.08, 16, 32]} />
+          <mesh position={[0, 0.4, 0]}>
+            <torusGeometry args={[0.15, 0.06, 16, 32]} />
             <meshStandardMaterial color={COLORS.SLIP_RING} />
           </mesh>
         </group>
@@ -121,18 +121,18 @@ const RotatingArmature = ({ setVoltage }) => {
   );
 };
 
-// 💡 외부 회로
+// 💡 외부 회로 (코일 위치에 맞춰 조정)
 const ExternalCircuit = ({ voltage }) => {
   return (
-    // 회로 위치를 오른쪽 앞으로 이동하여 겹침 방지
-    <group position={[3.2, -1.0, 1.5]}>
-      {/* 브러시 */}
-      <mesh position={[-0.8, 1.8, 0]}>
-        <boxGeometry args={[0.2, 0.1, 0.1]} />
+    // 회로 위치를 코일이 내려간 만큼 조정하고 오른쪽으로 배치
+    <group position={[2.8, -1.5, 0.5]}>
+      {/* 브러시 (높이 낮춤) */}
+      <mesh position={[-0.5, 0.6, 0]}>
+        <boxGeometry args={[0.15, 0.1, 0.1]} />
         <meshStandardMaterial color={COLORS.BRUSH} />
       </mesh>
-      <mesh position={[-0.5, 1.8, 0]}>
-        <boxGeometry args={[0.2, 0.1, 0.1]} />
+      <mesh position={[-0.2, 0.6, 0]}>
+        <boxGeometry args={[0.15, 0.1, 0.1]} />
         <meshStandardMaterial color={COLORS.BRUSH} />
       </mesh>
 
@@ -142,7 +142,7 @@ const ExternalCircuit = ({ voltage }) => {
           attach="geometry"
           attributes-position={
             new THREE.BufferAttribute(
-              new Float32Array([-0.8, 1.8, 0, -1.5, 0, 0, 0, 0, 0]),
+              new Float32Array([-0.5, 0.6, 0, -0.5, 0, 0, 0, 0, 0]),
               3
             )
           }
@@ -154,7 +154,7 @@ const ExternalCircuit = ({ voltage }) => {
           attach="geometry"
           attributes-position={
             new THREE.BufferAttribute(
-              new Float32Array([-0.5, 1.8, 0, 0, 1.8, 0, 0, 1.2, 0]),
+              new Float32Array([-0.2, 0.6, 0, -0.2, 0.3, 0, 0, 0.3, 0]),
               3
             )
           }
@@ -163,9 +163,9 @@ const ExternalCircuit = ({ voltage }) => {
       </line>
 
       {/* 전구 */}
-      <group position={[0, 0.6, 0]}>
+      <group position={[0.5, 0, 0]}>
         <mesh>
-          <sphereGeometry args={[0.6, 32, 32]} />
+          <sphereGeometry args={[0.5, 32, 32]} />
           <meshStandardMaterial
             color={COLORS.BULB_ON}
             emissive={COLORS.BULB_ON}
@@ -174,18 +174,18 @@ const ExternalCircuit = ({ voltage }) => {
             opacity={0.9}
           />
         </mesh>
-        <mesh position={[0, -0.7, 0]}>
-          <cylinderGeometry args={[0.3, 0.3, 0.5]} />
+        <mesh position={[0, -0.6, 0]}>
+          <cylinderGeometry args={[0.25, 0.25, 0.4]} />
           <meshStandardMaterial color="#555" />
         </mesh>
 
-        {/* ✅ [수정] 전압 텍스트 가시성 개선 (배경 추가 + 위치 조정) */}
-        <Html position={[0, -1.6, 0]} center>
-          <div className="flex flex-col items-center justify-center bg-gray-900/90 text-white p-2 rounded-lg shadow-2xl border border-gray-500 min-w-[100px]">
-            <div className="text-[11px] text-gray-300 font-bold mb-1">
+        {/* 전압 텍스트 */}
+        <Html position={[0, -1.4, 0]} center>
+          <div className="flex flex-col items-center justify-center bg-gray-900/90 text-white p-2 rounded-lg shadow-xl border border-gray-500 min-w-[90px]">
+            <div className="text-[10px] text-gray-300 font-bold mb-1">
               OUTPUT
             </div>
-            <div className="text-2xl font-black text-yellow-400 font-mono tracking-wider">
+            <div className="text-xl font-black text-yellow-400 font-mono tracking-wider">
               {(voltage * 12).toFixed(1)}V
             </div>
           </div>
@@ -204,20 +204,20 @@ const ACGeneratorScene = () => {
       <RotatingArmature setVoltage={setVoltage} />
       <ExternalCircuit voltage={voltage} />
 
-      {/* 자기장 화살표 (회전 적용) */}
-      <group position={[0, -1.5, 0]} rotation={SCENE_ROTATION}>
+      {/* 자기장 화살표 (위치 하향 조정) */}
+      <group position={[0, -1.8, 0]} rotation={[0, -0.3, 0]}>
         <arrowHelper
           args={[
             new THREE.Vector3(0, 1, 0),
             new THREE.Vector3(0, 0, 0),
-            2.5,
+            2.0,
             0x00ffff,
             0.3,
             0.2,
           ]}
         />
-        <Html position={[0, 1.5, 0]} center>
-          <div className="text-cyan-600 font-extrabold text-xl bg-white/80 px-2 rounded backdrop-blur-sm shadow-sm">
+        <Html position={[0, 1, 0]} center>
+          <div className="text-cyan-600 font-extrabold text-sm bg-white/80 px-2 rounded backdrop-blur-sm">
             B
           </div>
         </Html>
@@ -237,8 +237,8 @@ const ACGenerator3D = () => {
         overflow: "hidden",
       }}
     >
-      {/* 카메라 위치 조정: 측면에서 더 잘 보이도록 이동 */}
-      <Canvas camera={{ position: [2, 1, 9], fov: 45 }}>
+      {/* 카메라 정면 배치 */}
+      <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
         <ambientLight intensity={0.7} />
         <pointLight position={[10, 10, 10]} intensity={1} />
         <Suspense fallback={<Html center>Loading...</Html>}>
