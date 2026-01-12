@@ -3,18 +3,17 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Html, Center } from "@react-three/drei";
 import * as THREE from "three";
 
-// 🏭 사각형 철심 (Rectangular Iron Core) 컴포넌트
-const IronCore = ({ fluxIntensity, coreRef }) => {
-  // 사각형 모양의 단면을 만들고 두께를 주어(Extrude) 철심을 생성합니다.
+// 🏭 사각형 철심 (Rectangular Iron Core)
+const IronCore = ({ coreRef }) => {
   const shape = useMemo(() => {
     const s = new THREE.Shape();
-    // 바깥쪽 사각형
+    // 바깥쪽 사각형 (Outer bounds)
     s.moveTo(-2.2, -1.6);
     s.lineTo(2.2, -1.6);
     s.lineTo(2.2, 1.6);
     s.lineTo(-2.2, 1.6);
     s.lineTo(-2.2, -1.6);
-    // 안쪽 사각형 (구멍)
+    // 안쪽 사각형 (Inner hole)
     const hole = new THREE.Path();
     hole.moveTo(-1.4, -0.8);
     hole.lineTo(1.4, -0.8);
@@ -26,31 +25,74 @@ const IronCore = ({ fluxIntensity, coreRef }) => {
   }, []);
 
   const extrudeSettings = useMemo(
-    () => ({
-      steps: 1,
-      depth: 0.8, // 철심의 두께 (Z축 방향)
-      bevelEnabled: false,
-    }),
+    () => ({ steps: 1, depth: 0.8, bevelEnabled: false }),
     []
   );
 
   return (
+    // 철심의 중심을 Z=0에 맞추기 위해 z위치 조정 (-depth/2)
     <mesh ref={coreRef} position={[0, 0, -0.4]}>
-      {/* 중앙 정렬을 위해 위치 조정 */}
       <extrudeGeometry args={[shape, extrudeSettings]} />
+      {/* 자속이 통과하는 것을 강조하기 위해 철심 자체는 약간 어둡고 반사 재질로 설정 */}
       <meshStandardMaterial
-        color="#555"
-        roughness={0.3}
-        metalness={0.8}
-        // 자속(flux) 변화에 따라 철심이 은은하게 빛나는 효과
-        emissive="#ff5500"
-        emissiveIntensity={fluxIntensity * 0.3}
+        color="#444"
+        roughness={0.2}
+        metalness={0.9}
+        transparent
+        opacity={0.9}
       />
     </mesh>
   );
 };
 
-// 🌀 나선형 코일 (Helical Winding Coil) 컴포넌트
+// ✨ [NEW] 철심 내부를 통과하는 자속선 (Internal Flux Lines)
+const InternalFluxLines = ({ fluxRef }) => {
+  // 철심의 중심 경로를 따라가는 커브 생성
+  const fluxPath = useMemo(() => {
+    const path = new THREE.CurvePath();
+    const w = 1.8; // 철심 중심 폭 ( (2.2+1.4)/2 )
+    const h = 1.2; // 철심 중심 높이 ( (1.6+0.8)/2 )
+
+    const p1 = new THREE.Vector3(-w, -h, 0);
+    const p2 = new THREE.Vector3(w, -h, 0);
+    const p3 = new THREE.Vector3(w, h, 0);
+    const p4 = new THREE.Vector3(-w, h, 0);
+
+    path.add(new THREE.LineCurve3(p1, p2)); // 하단
+    path.add(new THREE.LineCurve3(p2, p3)); // 우측
+    path.add(new THREE.LineCurve3(p3, p4)); // 상단
+    path.add(new THREE.LineCurve3(p4, p1)); // 좌측
+    return path;
+  }, []);
+
+  // 여러 개의 평행한 자속선을 만들어 철심 내부를 채움
+  const numLines = 5;
+
+  return (
+    <group ref={fluxRef}>
+      {[...Array(numLines)].map((_, i) => {
+        // Z축으로 약간씩 오프셋을 주어 철심 두께 내부에 배치
+        const zOffset = (i - (numLines - 1) / 2) * 0.15;
+        return (
+          <mesh key={i} position={[0, 0, zOffset]}>
+            {/* 튜브 형태로 자속선 생성 (closed=true로 순환) */}
+            <tubeGeometry args={[fluxPath, 128, 0.03, 8, true]} />
+            {/* 빛나는 에너지 느낌의 재질 (BasicMaterial + 밝은색) */}
+            <meshBasicMaterial
+              color="#ff3300" // 밝은 주황/빨강색 자속
+              transparent
+              opacity={0} // 초기엔 안보임 (애니메이션으로 제어)
+              depthWrite={false} // 철심 내부에 있어도 밝게 빛나도록
+              blending={THREE.AdditiveBlending} // 빛 번짐 효과 추가
+            />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+};
+
+// 🌀 나선형 코일 (Helical Winding Coil)
 const WindingCoil = ({
   position,
   rotation,
@@ -61,32 +103,33 @@ const WindingCoil = ({
   label,
   labelBg,
 }) => {
-  // 나선형 경로 생성
   const coilGeometry = useMemo(() => {
     const points = [];
-    // 코일이 감기는 경로 계산
     for (let i = 0; i <= 200; i++) {
       const t = i / 200;
       const angle = 2 * Math.PI * turns * t;
-      // 원형 단면을 따라 나선형으로 감김
-      const x = radius * Math.cos(angle);
-      const z = radius * Math.sin(angle);
-      // 코일의 길이 방향 (Y축 기준)
-      const y = (t - 0.5) * length;
-      points.push(new THREE.Vector3(x, y, z));
+      points.push(
+        new THREE.Vector3(
+          radius * Math.cos(angle),
+          (t - 0.5) * length,
+          radius * Math.sin(angle)
+        )
+      );
     }
-    const curve = new THREE.CatmullRomCurve3(points);
-    // 튜브 형태로 지오메트리 생성 (경로, 분할수, 전선두께, 원형분할수, 닫힘여부)
-    return new THREE.TubeGeometry(curve, 256, 0.06, 12, false);
+    return new THREE.TubeGeometry(
+      new THREE.CatmullRomCurve3(points),
+      256,
+      0.06,
+      12,
+      false
+    );
   }, [turns, length, radius]);
 
   return (
     <group position={position} rotation={rotation}>
-      {/* 코일 메시 */}
       <mesh geometry={coilGeometry}>
         <meshStandardMaterial color={color} roughness={0.4} metalness={0.6} />
       </mesh>
-      {/* 코일 라벨 */}
       <Html position={[0, length / 2 + 0.5, 0]} center>
         <div
           style={{ backgroundColor: labelBg }}
@@ -102,71 +145,79 @@ const WindingCoil = ({
 // 🎬 메인 변압기 씬
 const TransformerScene = () => {
   const coreRef = useRef();
-  const fluxRef = useRef();
-  // 자속 강도를 state로 관리하지 않고 ref로 직접 접근하여 성능 최적화
+  const internalFluxRef = useRef(); // 내부 자속선 Ref
+  const arrowFluxRef = useRef(); // 방향 화살표 Ref
   const fluxIntensityRef = useRef(0);
 
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime() * 3;
-    // 0 ~ 1 사이로 맥동하는 자속 강도 계산
+    // 0 ~ 1 사이로 맥동하는 자속 강도 (sin파)
     fluxIntensityRef.current = (Math.sin(t) + 1) / 2;
 
-    // 1. 철심의 자속 맥동 표현 (Emissive 강도 조절)
-    if (coreRef.current) {
-      coreRef.current.material.emissiveIntensity =
-        fluxIntensityRef.current * 0.5;
+    const intensity = fluxIntensityRef.current;
+
+    // 1. [핵심] 철심 내부 자속선의 불투명도 애니메이션
+    if (internalFluxRef.current) {
+      internalFluxRef.current.children.forEach((child) => {
+        // 최소 0.1에서 최대 0.8까지 밝기 맥동
+        child.material.opacity = 0.1 + intensity * 0.7;
+      });
     }
-    // 2. 자속 화살표 애니메이션 (투명도 조절)
-    if (fluxRef.current) {
-      fluxRef.current.children.forEach((child) => {
-        child.material.opacity = fluxIntensityRef.current;
+
+    // 2. 철심 자체의 미세한 발광 (보조 효과)
+    if (coreRef.current) {
+      coreRef.current.material.emissiveIntensity = intensity * 0.2;
+    }
+
+    // 3. 방향 화살표 애니메이션
+    if (arrowFluxRef.current) {
+      arrowFluxRef.current.children.forEach((child) => {
+        child.material.opacity = intensity;
       });
     }
   });
 
   return (
     <group>
-      {/* --- 1. 사각형 철심 (Rectangular Iron Core) --- */}
-      <IronCore coreRef={coreRef} fluxIntensity={0} />
+      {/* 1. 사각형 철심 */}
+      <IronCore coreRef={coreRef} />
 
-      {/* --- 2. 1차 코일 (Primary Coil - 입력, 빨강) --- */}
-      {/* 왼쪽 변에 위치, 권수(turns)를 적게 설정 */}
+      {/* 2. [핵심] 철심 내부를 통과하는 자속선 추가 */}
+      <InternalFluxLines fluxRef={internalFluxRef} />
+
+      {/* 3. 1차 코일 (입력) */}
       <WindingCoil
         position={[-1.8, 0, 0]}
-        rotation={[0, 0, 0]} // Y축 방향으로 정렬
-        color="#d97706" // 구리색/빨강 계열
-        turns={10} // 권수 N1 (적음)
-        length={1.4} // 코일 길이
-        radius={0.6} // 코일 반경
+        rotation={[0, 0, 0]}
+        color="#d97706"
+        turns={10}
+        length={1.4}
+        radius={0.6}
         label="입력 (N1)"
         labelBg="#d97706"
       />
 
-      {/* --- 3. 2차 코일 (Secondary Coil - 출력, 파랑) --- */}
-      {/* 오른쪽 변에 위치, 권수(turns)를 많게 설정 (승압 변압기 표현) */}
+      {/* 4. 2차 코일 (출력) */}
       <WindingCoil
         position={[1.8, 0, 0]}
-        rotation={[0, 0, 0]} // Y축 방향으로 정렬
-        color="#2563eb" // 파란색
-        turns={20} // 권수 N2 (많음, N2 > N1)
-        length={1.4} // 코일 길이
-        radius={0.65} // 코일 반경 (권수가 많아 약간 더 두껍게)
+        rotation={[0, 0, 0]}
+        color="#2563eb"
+        turns={20}
+        length={1.4}
+        radius={0.65}
         label="출력 (N2 > N1)"
         labelBg="#2563eb"
       />
 
-      {/* --- 4. 자속 흐름 표시 (화살표) --- */}
-      {/* 사각형 철심의 위/아래 경로에 맞춰 화살표 배치 */}
-      <group ref={fluxRef}>
-        {/* 위쪽 화살표 (오른쪽으로) */}
+      {/* 5. 자속 방향 화살표 (보조 표시) */}
+      <group ref={arrowFluxRef}>
         <mesh position={[0, 1.2, 0]} rotation={[0, 0, -Math.PI / 2]}>
           <coneGeometry args={[0.25, 0.6, 16]} />
-          <meshBasicMaterial color="#ff5500" transparent opacity={0} />
+          <meshBasicMaterial color="#ff3300" transparent opacity={0} />
         </mesh>
-        {/* 아래쪽 화살표 (왼쪽으로) */}
         <mesh position={[0, -1.2, 0]} rotation={[0, 0, Math.PI / 2]}>
           <coneGeometry args={[0.25, 0.6, 16]} />
-          <meshBasicMaterial color="#ff5500" transparent opacity={0} />
+          <meshBasicMaterial color="#ff3300" transparent opacity={0} />
         </mesh>
       </group>
     </group>
@@ -186,9 +237,10 @@ const Transformer3D = () => {
       }}
     >
       <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
-        <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={1} />
-        <spotLight position={[0, 5, 10]} angle={0.3} intensity={0.5} />
+        <ambientLight intensity={0.4} />
+        <pointLight position={[10, 10, 10]} intensity={0.8} />
+        {/* 자속이 빛나는 느낌을 강조하기 위한 조명 추가 */}
+        <pointLight position={[0, 0, 2]} intensity={0.5} color="#ff5500" />
         <Center>
           <TransformerScene />
         </Center>
