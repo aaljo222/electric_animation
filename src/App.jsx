@@ -6,7 +6,7 @@ import "./App.css";
 // --------------------------------------------------------
 import ACMotor3D from "./components/animations/ACMotor3D"; // 2. 유도 전동기
 import DCMotor3D from "./components/animations/DCMotor3D"; // 1. 직류 전동기
-import DotProduct3D from "./components/animations/DotProduct3D
+import DotProduct3D from "./components/animations/DotProduct3D";
 import RotatingCoil from "./components/animations/RotatingCoil"; // 3. 교류 발전기 (New)
 import Solenoid3D from "./components/animations/Solenoid3D"; // 5. 솔레노이드 (New)
 import Transformer3D from "./components/animations/Transformer3D"; // 4. 변압기 (New)
