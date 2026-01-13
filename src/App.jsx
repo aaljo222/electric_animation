@@ -5,7 +5,7 @@ import "./App.css";
 // 1. 3D 애니메이션 컴포넌트 불러오기
 // --------------------------------------------------------
 import DCMotor3D from "./components/animations/DCMotor3D"; // 1. 직류 전동기
-import ACMotor3D from "./components/animations/ACMotor3D"; // 2. 유도 전동기
+import RotatingCoil from "./components/animations/RotatingCoil"; // 2. 유도 전동기
 import ACGenerator3D from "./components/animations/ACGenerator3D"; // 3. 교류 발전기 (New)
 import Transformer3D from "./components/animations/Transformer3D"; // 4. 변압기 (New)
 import Solenoid3D from "./components/animations/Solenoid3D"; // 5. 솔레노이드 (New)
@@ -71,7 +71,7 @@ function App() {
           <div className="card-body">
             <div className="visual-panel left-panel">
               <Suspense fallback={<div className="loading">Loading 3D...</div>}>
-                <ACMotor3D />
+                <RotatingCoil />
               </Suspense>
             </div>
             <div className="visual-panel right-panel">
