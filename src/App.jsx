@@ -5,8 +5,8 @@ import "./App.css";
 // 1. 3D 애니메이션 컴포넌트 불러오기
 // --------------------------------------------------------
 import DCMotor3D from "./components/animations/DCMotor3D"; // 1. 직류 전동기
-import RotatingCoil from "./components/animations/RotatingCoil"; // 2. 유도 전동기
-import ACGenerator3D from "./components/animations/ACGenerator3D"; // 3. 교류 발전기 (New)
+import ACMotor3D from "./components/animations/ACMotor3D"; // 2. 유도 전동기
+import RotatingCoil from "./components/animations/RotatingCoil"; // 3. 교류 발전기 (New)
 import Transformer3D from "./components/animations/Transformer3D"; // 4. 변압기 (New)
 import Solenoid3D from "./components/animations/Solenoid3D"; // 5. 솔레노이드 (New)
 
@@ -71,7 +71,7 @@ function App() {
           <div className="card-body">
             <div className="visual-panel left-panel">
               <Suspense fallback={<div className="loading">Loading 3D...</div>}>
-                <RotatingCoil />
+                <ACMotor3D />
               </Suspense>
             </div>
             <div className="visual-panel right-panel">
@@ -85,9 +85,9 @@ function App() {
           </div>
           <div className="card-footer">
             <p>
-              <strong>핵심:</strong>{" "}
+              <strong>핵심:</strong>
               <span className="highlight">회전 자기장</span>을 따라 회전자가
-              돌지만, 동기 속도보다 약간 느린{" "}
+              돌지만, 동기 속도보다 약간 느린
               <span className="highlight">슬립(Slip)</span>이 발생합니다.
             </p>
           </div>
@@ -108,7 +108,7 @@ function App() {
           <div className="card-body">
             <div className="visual-panel left-panel">
               <Suspense fallback={<div className="loading">Loading...</div>}>
-                <ACGenerator3D />
+                <RotatingCoil />
               </Suspense>
             </div>
             <div className="visual-panel right-panel">
