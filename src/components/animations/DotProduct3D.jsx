@@ -27,6 +27,12 @@ const DotProductScene = () => {
     return points;
   }, []);
 
+  // [수정] 빈 배열 대신 초기값으로 사용할 더미 좌표 생성
+  const initialPoints = useMemo(
+    () => [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0)],
+    []
+  );
+
   useFrame((state, delta) => {
     angleRef.current += speed * delta;
     if (angleRef.current > Math.PI * 2) angleRef.current -= Math.PI * 2;
@@ -35,6 +41,7 @@ const DotProductScene = () => {
     const x = Math.cos(theta) * radius;
     const y = Math.sin(theta) * radius;
 
+    // ref를 통해 직접 좌표 업데이트 (성능 최적화)
     if (hypotenuseRef.current) {
       hypotenuseRef.current.setPoints([
         new THREE.Vector3(0, 0, 0),
@@ -52,7 +59,7 @@ const DotProductScene = () => {
         new THREE.Vector3(0, 0, 0),
         new THREE.Vector3(x, 0, 0),
       ]);
-      baseRef.current.material.color.set(x >= 0 ? "#ef4444" : "#3b82f6"); // Red / Blue
+      baseRef.current.material.color.set(x >= 0 ? "#ef4444" : "#3b82f6");
     }
 
     setDotValue((x / radius).toFixed(2));
@@ -68,13 +75,20 @@ const DotProductScene = () => {
         lineWidth={0.5}
       />
 
+      {/* [중요 수정] points={[]} -> points={initialPoints} 로 변경하여 초기 렌더링 에러 방지 */}
+
       {/* 피상전력 (Apparent Power) */}
-      <Line ref={hypotenuseRef} points={[]} color="white" lineWidth={3} />
+      <Line
+        ref={hypotenuseRef}
+        points={initialPoints}
+        color="white"
+        lineWidth={3}
+      />
 
       {/* 무효전력 성분 (Reactive Component) */}
       <Line
         ref={verticalRef}
-        points={[]}
+        points={initialPoints}
         color="yellow"
         lineWidth={1}
         dashed={true}
@@ -83,7 +97,12 @@ const DotProductScene = () => {
       />
 
       {/* 유효전력 (Active Power = Dot Product) */}
-      <Line ref={baseRef} points={[]} color="#ef4444" lineWidth={6} />
+      <Line
+        ref={baseRef}
+        points={initialPoints}
+        color="#ef4444"
+        lineWidth={6}
+      />
 
       <Text position={[0, -0.6, 0]} fontSize={0.25} color="#aaa">
         Active Power (cosθ)
