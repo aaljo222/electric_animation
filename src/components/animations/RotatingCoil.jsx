@@ -2,12 +2,13 @@ import React, { useRef } from "react";
 import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import { TextureLoader } from "three";
 import { OrbitControls } from "@react-three/drei";
-
+import bgImg from '../../assets/images/background.png'; 
+import coilImg from '../../assets/images/coil.png';
 // 코일 컴포넌트
 function RotatingCoil() {
   const coilRef = useRef();
   // 이미지 로드 (public 폴더나 assets 경로)
-  const coilTexture = useLoader(TextureLoader, "/assets/images/coil.png");
+  const coilTexture = useLoader(TextureLoader, coilImg);
 
   useFrame((state, delta) => {
     // x축을 기준으로 회전 (책장이 넘어가듯 회전)
@@ -29,7 +30,7 @@ function RotatingCoil() {
 
 // 배경 컴포넌트
 function Background() {
-  const bgTexture = useLoader(TextureLoader, "/assets/images/background.png");
+  const bgTexture = useLoader(TextureLoader, bgImg);
   
   return (
     <mesh position={[0, 0, 0]}>
