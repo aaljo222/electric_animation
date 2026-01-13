@@ -1,24 +1,24 @@
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 import "./App.css";
 
 // --------------------------------------------------------
 // 1. 3D 애니메이션 컴포넌트 불러오기
 // --------------------------------------------------------
-import DCMotor3D from "./components/animations/DCMotor3D"; // 1. 직류 전동기
 import ACMotor3D from "./components/animations/ACMotor3D"; // 2. 유도 전동기
+import DCMotor3D from "./components/animations/DCMotor3D"; // 1. 직류 전동기
+import DotProduct3D from "./components/animations/DotProduct3D
 import RotatingCoil from "./components/animations/RotatingCoil"; // 3. 교류 발전기 (New)
-import Transformer3D from "./components/animations/Transformer3D"; // 4. 변압기 (New)
 import Solenoid3D from "./components/animations/Solenoid3D"; // 5. 솔레노이드 (New)
-
+import Transformer3D from "./components/animations/Transformer3D"; // 4. 변압기 (New)
 // --------------------------------------------------------
 // 2. 다이어그램 이미지 불러오기
 // (이미지 파일들을 src/assets/images 폴더에 넣어주세요)
 // --------------------------------------------------------
-import dcDiagram from "./assets/images/image_0.png"; // 기존 DC 모터 이미지
 import acDiagram from "./assets/images/ac_motor.jpg"; // 기존 AC 모터 이미지
 import genDiagram from "./assets/images/generator.png"; // [New] 발전기 이미지
-import transDiagram from "./assets/images/transformer.png"; // [New] 변압기 이미지
+import dcDiagram from "./assets/images/image_0.png"; // 기존 DC 모터 이미지
 import solDiagram from "./assets/images/solenoid.png"; // [New] 솔레노이드 이미지
+import transDiagram from "./assets/images/transformer.png"; // [New] 변압기 이미지
 
 function App() {
   return (
@@ -203,6 +203,57 @@ function App() {
               <strong>핵심:</strong>{" "}
               <span className="highlight">앙페르의 오른나사 법칙</span>. 전류가
               감기는 방향으로 오른손을 감싸쥐면 엄지손가락이 N극입니다.
+            </p>
+          </div>
+        </div>
+        {/* ================================================= */}
+        {/* 6. 벡터의 내적과 역률 (Power Factor) [NEW] */}
+        {/* ================================================= */}
+        <div className="study-card">
+          <div
+            className="card-header pf-header"
+            style={{ background: "#db2777" }} // 핑크색 계열
+          >
+            <h2>6. 벡터의 내적과 역률 (Power Factor) - P = VI cosθ</h2>
+          </div>
+          <div className="card-body">
+            <div
+              className="visual-panel left-panel"
+              style={{ background: "#111" }} // 어두운 배경 추천
+            >
+              <Suspense fallback={<div className="loading">Loading...</div>}>
+                <DotProduct3D />
+              </Suspense>
+            </div>
+            <div className="visual-panel right-panel">
+              {/* 이미지가 없다면 텍스트나 placeholder 사용 */}
+              <div
+                style={{ padding: "20px", textAlign: "center", color: "#333" }}
+              >
+                <h3>유효전력 원리</h3>
+                <p>전압(V)과 전류(I)의 위상차(θ)에 따른 내적 값</p>
+                <div
+                  style={{
+                    marginTop: "20px",
+                    border: "1px dashed #ccc",
+                    padding: "10px",
+                  }}
+                >
+                  (여기에 역률 삼각형
+                  <br />
+                  이미지를 넣으세요)
+                </div>
+              </div>
+              <div className="panel-label">Active vs Apparent Power</div>
+            </div>
+          </div>
+          <div className="card-footer">
+            <p>
+              <strong>핵심:</strong>{" "}
+              <span className="highlight">내적(Dot Product)</span>은 전기에서{" "}
+              <span className="highlight">유효전력(Active Power)</span>을
+              의미합니다. 붉은색 선의 길이가 <strong>cosθ (역률)</strong>에
+              해당합니다.
             </p>
           </div>
         </div>
