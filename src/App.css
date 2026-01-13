@@ -94,7 +94,7 @@
   height: 100%;
   /* contain: 이미지 전체가 다 보이도록 함 (비율 유지, 여백 생길 수 있음) */
   /* cover: 여백 없이 꽉 채움 (비율 유지, 이미지가 잘릴 수 있음) */
-  object-fit: contain; 
+  object-fit: cover; 
   display: block;
 }
 
