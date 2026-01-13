@@ -1,65 +1,53 @@
-import { motion } from "framer-motion";
+import React, { useRef } from "react";
+import { Canvas, useFrame, useLoader } from "@react-three/fiber";
+import { TextureLoader } from "three";
+import { OrbitControls } from "@react-three/drei";
 
-const RotatingCoil = () => {
+// 코일 컴포넌트
+function RotatingCoil() {
+  const coilRef = useRef();
+  // 이미지 로드 (public 폴더나 assets 경로)
+  const coilTexture = useLoader(TextureLoader, "/assets/coil.png");
+
+  useFrame((state, delta) => {
+    // x축을 기준으로 회전 (책장이 넘어가듯 회전)
+    // 발전기 원리상 코일은 축을 중심으로 돕니다.
+    if (coilRef.current) {
+      coilRef.current.rotation.x += delta * 2; // 회전 속도 조절
+    }
+  });
+
   return (
-    <div className="flex flex-col items-center justify-center p-8 bg-gray-50 rounded-xl border">
-      <h3 className="text-lg font-bold mb-4">직류기 원리 (플레밍의 법칙)</h3>
+    <mesh ref={coilRef} position={[0, 0, 0.1]}> 
+      {/* position z=0.1은 배경보다 살짝 앞에 두기 위함 */}
+      <planeGeometry args={[3, 2]} /> {/* 이미지 비율에 맞춰 크기 조절 */}
+      <meshBasicMaterial map={coilTexture} transparent={true} side={2} /> 
+      {/* side={2}는 DoubleSide: 뒤집혔을 때도 그림이 보이게 함 */}
+    </mesh>
+  );
+}
 
-      <div className="relative w-64 h-64 flex items-center justify-center">
-        {/* 1. N극 (왼쪽 자석) */}
-        <div className="absolute left-0 w-16 h-40 bg-red-500 rounded-l-lg flex items-center justify-center text-white font-bold text-2xl shadow-lg z-10">
-          N
-        </div>
+// 배경 컴포넌트
+function Background() {
+  const bgTexture = useLoader(TextureLoader, "/assets/background.png");
+  
+  return (
+    <mesh position={[0, 0, 0]}>
+      <planeGeometry args={[5, 3]} /> {/* 배경 크기 */}
+      <meshBasicMaterial map={bgTexture} />
+    </mesh>
+  );
+}
 
-        {/* 2. S극 (오른쪽 자석) */}
-        <div className="absolute right-0 w-16 h-40 bg-blue-600 rounded-r-lg flex items-center justify-center text-white font-bold text-2xl shadow-lg z-10">
-          S
-        </div>
-
-        {/* 3. 자속선 (Magnetic Flux Lines) */}
-        <div className="absolute w-full h-full flex flex-col justify-center items-center space-y-4 opacity-30">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="w-32 h-0.5 bg-gray-800 dashed" />
-          ))}
-          <span className="text-xs text-gray-500 absolute bottom-4">
-            자속 (Φ) →
-          </span>
-        </div>
-
-        {/* 4. 회전하는 도체 (Coil) */}
-        <motion.div
-          className="w-32 h-2 border-4 border-yellow-500 bg-yellow-200 z-20"
-          animate={{ rotate: 360 }} // 360도 회전
-          transition={{
-            duration: 4, // 4초 동안 한 바퀴
-            repeat: Infinity, // 무한 반복
-            ease: "linear", // 등속 운동
-          }}
-          style={{
-            borderRadius: "4px",
-            boxShadow: "0 0 10px rgba(234, 179, 8, 0.5)",
-          }}
-        >
-          {/* 코일 내부 전류 방향 표시 (옵션) */}
-          <div className="absolute -top-6 left-0 text-xs font-bold text-yellow-700">
-            a
-          </div>
-          <div className="absolute -top-6 right-0 text-xs font-bold text-yellow-700">
-            b
-          </div>
-        </motion.div>
-
-        {/* 축 (Axis) */}
-        <div className="absolute w-4 h-4 bg-gray-800 rounded-full z-30"></div>
-      </div>
-
-      <p className="mt-6 text-sm text-gray-600 text-center max-w-xs">
-        도체가 자속을 끊으면 <strong>유도 기전력(E)</strong>이 발생합니다.
-        <br />
-        (E = Blv sinθ)
-      </p>
+export default function GeneratorScene() {
+  return (
+    <div style={{ width: "100%", height: "500px" }}>
+      <Canvas>
+        <ambientLight intensity={0.5} />
+        <Background />
+        <RotatingCoil />
+        <OrbitControls enableZoom={true} />
+      </Canvas>
     </div>
   );
-};
-
-export default RotatingCoil;
+}
